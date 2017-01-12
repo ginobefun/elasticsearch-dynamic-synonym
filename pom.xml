@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.elasticsearch.plugin</groupId>
+        <artifactId>plugins</artifactId>
+        <version>2.3.4</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.ginobefunny.elasticsearch.plugins</groupId>
+    <artifactId>elasticsearch-dynamic-synonym</artifactId>
+    <version>2.3.4</version>
+    <name>ElasticSearch Dynaic Synonym Token Filter Plugin</name>
+    <description>ElasticSearch Plugin for Dynaic Synonym Token Filter.</description>
+
+    <properties>
+        <elasticsearch.plugin.classname>com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin</elasticsearch.plugin.classname>
+        <elasticsearch.license.header>${project.basedir}/src/main/resources/license-check/license_header.txt</elasticsearch.license.header>
+        <elasticsearch.license.headerDefinition>${project.basedir}/src/main/resources/license-check/license_header_definition.xml</elasticsearch.license.headerDefinition>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.30</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
