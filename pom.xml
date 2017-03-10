@@ -16,9 +16,13 @@
     <description>ElasticSearch Plugin for Dynaic Synonym Token Filter.</description>
 
     <properties>
-        <elasticsearch.plugin.classname>com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin</elasticsearch.plugin.classname>
-        <elasticsearch.license.header>${project.basedir}/src/main/resources/license-check/license_header.txt</elasticsearch.license.header>
-        <elasticsearch.license.headerDefinition>${project.basedir}/src/main/resources/license-check/license_header_definition.xml</elasticsearch.license.headerDefinition>
+        <elasticsearch.plugin.classname>com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin
+        </elasticsearch.plugin.classname>
+        <elasticsearch.license.header>${project.basedir}/src/main/resources/license-check/license_header.txt
+        </elasticsearch.license.header>
+        <elasticsearch.license.headerDefinition>
+            ${project.basedir}/src/main/resources/license-check/license_header_definition.xml
+        </elasticsearch.license.headerDefinition>
     </properties>
 
     <dependencies>

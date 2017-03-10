@@ -31,6 +31,8 @@ public class SynonymRuleManager {
 
     private static final ESLogger logger = Loggers.getLogger("dynamic-synonym");
 
+    private static final int DB_CHECK_URL = 60;
+
     private static final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1, new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -52,7 +54,7 @@ public class SynonymRuleManager {
                     singleton.configuration = cfg;
                     long loadedMaxVersion = singleton.loadSynonymRule();
                     executorService.scheduleWithFixedDelay(new Monitor(cfg, loadedMaxVersion), 1,
-                            cfg.getCheckDBInteval(), TimeUnit.SECONDS);
+                            DB_CHECK_URL, TimeUnit.SECONDS);
                 }
             }
         }
@@ -87,7 +89,8 @@ public class SynonymRuleManager {
             return currentMaxVersion;
         } catch (Exception e) {
             logger.error("Load synonym rule failed!", e);
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
+            return 0L;
         }
     }
 

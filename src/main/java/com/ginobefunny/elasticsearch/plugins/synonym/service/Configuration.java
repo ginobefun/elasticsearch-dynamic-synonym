@@ -14,35 +14,25 @@
 package com.ginobefunny.elasticsearch.plugins.synonym.service;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.elasticsearch.common.settings.Settings;
 
 /**
  * Created by ginozhang on 2017/1/12.
  */
 public class Configuration {
 
-    private boolean ignoreCase;
+    final private boolean ignoreCase;
 
-    private boolean expand;
+    final private boolean expand;
 
-    private String tokenizerName;
+    final private String dbUrl;
 
-    private String dbUrl;
+    final private Analyzer analyzer;
 
-    private int checkDBInteval;
-
-    private Analyzer analyzer;
-
-    public Configuration(final Settings settings)
-    {
-        // TODO: get analyzer from setting
-        this.analyzer = new WhitespaceAnalyzer();
-        this.ignoreCase = settings.getAsBoolean("ignore_case", false);
-        this.expand = settings.getAsBoolean("expand", true);
-        this.tokenizerName = settings.get("tokenizer", "whitespace");
-        this.dbUrl = settings.get("dbUrl");
-        this.checkDBInteval = settings.getAsInt("checkDBInteval", 120);
+    public Configuration(boolean ignoreCase, boolean expand, Analyzer analyzer, String dbUrl) {
+        this.ignoreCase = ignoreCase;
+        this.expand = expand;
+        this.analyzer = analyzer;
+        this.dbUrl = dbUrl;
     }
 
     public Analyzer getAnalyzer() {
@@ -57,15 +47,8 @@ public class Configuration {
         return expand;
     }
 
-    public String getTokenizerName() {
-        return tokenizerName;
-    }
-
     public String getDBUrl() {
         return dbUrl;
     }
 
-    public int getCheckDBInteval() {
-        return checkDBInteval;
-    }
 }
