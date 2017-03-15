@@ -1,7 +1,7 @@
 # elasticsearch-dynamic-synonym
 An Elasticsearch token filter sopport load dynamic synonym.
 
-Elasticsearch自带了一个synonym同义词插件，但是该插件只能使用文件或在分析器中静态地配置同义词，如果需要添加或修改，需要修改配置文件和重启，使用方式不够友好。通过学习Elasticsearch的synonym代码，自研了一个可动态维护同义词的插件，并以运用于生成环境。
+Elasticsearch自带了一个synonym同义词插件，但是该插件只能使用文件或在分析器中静态地配置同义词，如果需要添加或修改，需要修改配置文件和重启，使用方式不够友好。通过学习Elasticsearch的synonym代码，自研了一个可动态维护同义词的插件，并以运用于生产环境。
 
 # Elasticsearch自带的SynonymTokenFilter
 Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonyms参数）和文件中配置（使用synonyms_path参数）同义词，配置方式如下：
