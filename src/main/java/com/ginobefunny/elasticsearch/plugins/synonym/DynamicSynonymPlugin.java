@@ -14,6 +14,9 @@
 package com.ginobefunny.elasticsearch.plugins.synonym;
 
 import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.index.analysis.AnalysisModule;
 import org.elasticsearch.plugins.Plugin;
 
 import java.util.Collection;
@@ -24,9 +27,14 @@ import java.util.Collections;
  */
 public class DynamicSynonymPlugin extends Plugin {
 
+    /** Plugin name **/
+    public static final String PLUGIN_NAME = "dynamic-synonym";
+
+    public static final ESLogger logger = ESLoggerFactory.getLogger(PLUGIN_NAME);
+
     @Override
     public String name() {
-        return "dynamic-synonym";
+        return PLUGIN_NAME;
     }
 
     @Override
@@ -36,6 +44,12 @@ public class DynamicSynonymPlugin extends Plugin {
 
     @Override
     public Collection<Module> nodeModules() {
+        // this method will be called when node start
         return Collections.<Module>singletonList(new DynamicSynonymModule());
+    }
+
+    public void onModule(AnalysisModule module) {
+        // this mothod will be called where analyzer need
+        module.addProcessor(new DynamicSynonymBinderProcessor());
     }
 }

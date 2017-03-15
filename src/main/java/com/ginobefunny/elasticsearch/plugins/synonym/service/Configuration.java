@@ -20,13 +20,13 @@ import org.apache.lucene.analysis.Analyzer;
  */
 public class Configuration {
 
-    final private boolean ignoreCase;
+    private final boolean ignoreCase;
 
-    final private boolean expand;
+    private final boolean expand;
 
-    final private String dbUrl;
+    private final String dbUrl;
 
-    final private Analyzer analyzer;
+    private final Analyzer analyzer;
 
     public Configuration(boolean ignoreCase, boolean expand, Analyzer analyzer, String dbUrl) {
         this.ignoreCase = ignoreCase;
@@ -50,5 +50,4 @@ public class Configuration {
     public String getDBUrl() {
         return dbUrl;
     }
-
 }

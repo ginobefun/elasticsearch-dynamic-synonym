@@ -61,7 +61,7 @@ public final class JDBCUtils {
 
             rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                list.add(rs.getString("synonym"));
+                list.add(rs.getString("rule"));
             }
         } finally {
             closeQuietly(conn, stmt, rs);

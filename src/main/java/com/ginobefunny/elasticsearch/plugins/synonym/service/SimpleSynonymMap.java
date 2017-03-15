@@ -13,26 +13,24 @@
  */
 package com.ginobefunny.elasticsearch.plugins.synonym.service;
 
+import com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.Loggers;
 
 import java.io.IOException;
 import java.util.*;
 
 /**
  * Created by ginozhang on 2017/1/12.
+ * SEE: org.apache.lucene.analysis.synonym.SolrSynonymParser
  */
 public class SimpleSynonymMap {
 
-    private static final ESLogger logger = Loggers.getLogger("dynamic-synonym");
-
     private Map<String, List<String>> ruleMap = new HashMap<String, List<String>>();
 
-    private Configuration configuration;
+    private final Configuration configuration;
 
     public SimpleSynonymMap(Configuration cfg) {
         this.configuration = cfg;
@@ -42,7 +40,7 @@ public class SimpleSynonymMap {
         try {
             addInternal(rule);
         } catch (Throwable t) {
-            logger.error("Add synonym rule failed. rule: " + rule, t);
+            DynamicSynonymPlugin.logger.error("Add synonym rule failed. rule: " + rule, t);
         }
     }
 
@@ -53,35 +51,45 @@ public class SimpleSynonymMap {
                 throw new IllegalArgumentException("more than one explicit mapping specified on the same line");
             }
 
-            Set<String> inputStrSet = new HashSet<String>();
+            List<String> inputList = new ArrayList<>();
             String inputStrings[] = split(sides[0], ",");
             for (int i = 0; i < inputStrings.length; i++) {
-                inputStrSet.addAll(analyze(process(inputStrings[i])));
+                inputList.addAll(analyze(process(inputStrings[i])));
             }
 
-            Set<String> outputStrSet = new HashSet<String>();
+            List<String> outputList = new ArrayList<>();
             String outputStrings[] = split(sides[1], ",");
             for (int i = 0; i < outputStrings.length; i++) {
-                outputStrSet.addAll(analyze(process(outputStrings[i])));
+                outputList.addAll(analyze(process(outputStrings[i])));
             }
 
             // these mappings are explicit and never preserve original
-            for (String input : inputStrSet) {
-                for (String output : outputStrSet) {
+            for (String input : inputList) {
+                for (String output : outputList) {
                     addToRuleMap(input, output);
                 }
             }
         } else {
-            Set<String> inputStrSet = new HashSet<String>();
+            List<String> inputList = new ArrayList<>();
             String inputStrings[] = split(line, ",");
             for (int i = 0; i < inputStrings.length; i++) {
-                inputStrSet.addAll(analyze(process(inputStrings[i])));
+                inputList.addAll(analyze(process(inputStrings[i])));
             }
 
-            // use expand=true to get all pairs
-            for (String input : inputStrSet) {
-                for (String output : inputStrSet) {
-                    addToRuleMap(input, output);
+            if (configuration.isExpand()) {
+                // all pairs
+                for (String input : inputList) {
+                    for (String output : inputList) {
+                        addToRuleMap(input, output);
+                    }
+                }
+            } else {
+                // all subsequent inputs map to first one; we also add inputs[0] here
+                // so that we "effectively" (because we remove the original input and
+                // add back a synonym with the same text) change that token's type to
+                // SYNONYM (matching legacy behavior):
+                for (int i = 0; i < inputList.size(); i++) {
+                    addToRuleMap(inputList.get(i), inputList.get(0));
                 }
             }
         }
@@ -90,24 +98,25 @@ public class SimpleSynonymMap {
     private Set<String> analyze(String text) throws IOException {
         Set<String> result = new HashSet<String>();
         Analyzer analyzer = configuration.getAnalyzer();
-        TokenStream ts = analyzer.tokenStream("", text);
-        CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
-        PositionIncrementAttribute posIncAtt = ts.addAttribute(PositionIncrementAttribute.class);
-        ts.reset();
-        while (ts.incrementToken()) {
-            int length = termAtt.length();
-            if (length == 0) {
-                throw new IllegalArgumentException("term: " + text + " analyzed to a zero-length token");
-            }
-            if (posIncAtt.getPositionIncrement() != 1) {
-                throw new IllegalArgumentException("term: " + text + " analyzed to a token with posinc != 1");
+        try (TokenStream ts = analyzer.tokenStream("", text)) {
+            CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
+            PositionIncrementAttribute posIncAtt = ts.addAttribute(PositionIncrementAttribute.class);
+            ts.reset();
+            while (ts.incrementToken()) {
+                int length = termAtt.length();
+                if (length == 0) {
+                    throw new IllegalArgumentException("term: " + text + " analyzed to a zero-length token");
+                }
+                if (posIncAtt.getPositionIncrement() != 1) {
+                    throw new IllegalArgumentException("term: " + text + " analyzed to a token with posinc != 1");
+                }
+
+                result.add(new String(termAtt.buffer(), 0, termAtt.length()));
             }
 
-            result.add(new String(termAtt.buffer(), 0, termAtt.length()));
+            ts.end();
+            return result;
         }
-
-        ts.end();
-        return result;
     }
 
     private void addToRuleMap(String inputString, String outputString) {
@@ -154,20 +163,21 @@ public class SimpleSynonymMap {
     }
 
     private String process(String input) {
-        String lowercaseStr = input.trim().toLowerCase(Locale.getDefault());
-        if (lowercaseStr.indexOf("\\") >= 0) {
+
+        String inputStr = configuration.isIgnoreCase() ? input.trim().toLowerCase(Locale.getDefault()) : input;
+        if (inputStr.indexOf("\\") >= 0) {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < lowercaseStr.length(); i++) {
-                char ch = lowercaseStr.charAt(i);
-                if (ch == '\\' && i < lowercaseStr.length() - 1) {
-                    sb.append(lowercaseStr.charAt(++i));
+            for (int i = 0; i < inputStr.length(); i++) {
+                char ch = inputStr.charAt(i);
+                if (ch == '\\' && i < inputStr.length() - 1) {
+                    sb.append(inputStr.charAt(++i));
                 } else {
                     sb.append(ch);
                 }
             }
             return sb.toString();
         }
-        return lowercaseStr;
+        return inputStr;
     }
 
     public List<String> getSynonymWords(String input) {

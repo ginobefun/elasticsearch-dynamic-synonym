@@ -13,17 +13,14 @@
  */
 package com.ginobefunny.elasticsearch.plugins.synonym.service.utils;
 
+import com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.Configuration;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.SynonymRuleManager;
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.Loggers;
 
 /**
  * Created by ginozhang on 2017/1/12.
  */
 public class Monitor implements Runnable {
-
-    private static final ESLogger logger = Loggers.getLogger("dynamic-synonym");
 
     private Configuration configuration;
 
@@ -37,14 +34,14 @@ public class Monitor implements Runnable {
     @Override
     public void run() {
         try {
-            long currentMaxVersion =  JDBCUtils.queryMaxSynonymRuleVersion(configuration.getDBUrl());
+            long currentMaxVersion = JDBCUtils.queryMaxSynonymRuleVersion(configuration.getDBUrl());
             if (currentMaxVersion > lastUpdateVersion) {
                 if (SynonymRuleManager.getSingleton().reloadSynonymRule(currentMaxVersion)) {
                     lastUpdateVersion = currentMaxVersion;
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to reload synonym rule!", e);
+            DynamicSynonymPlugin.logger.error("Failed to reload synonym rule!", e);
         }
     }
 

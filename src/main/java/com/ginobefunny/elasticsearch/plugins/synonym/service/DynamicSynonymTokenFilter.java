@@ -51,7 +51,6 @@ public class DynamicSynonymTokenFilter extends TokenFilter {
 
     @Override
     public boolean incrementToken() throws IOException {
-        //System.out.println("[Synonym]Start to process.");
         if (currentInput == null) {
             if (!input.incrementToken()) {
                 return false;
@@ -60,9 +59,7 @@ public class DynamicSynonymTokenFilter extends TokenFilter {
             currentInput = new String(termAtt.buffer(), 0, termAtt.length());
             startOffset = offset.startOffset();
             endOffset = offset.endOffset();
-            //System.out.println("[Synonym]Input:" + currentInput+"|"+startOffset+"|"+endOffset);
             currentWords = SynonymRuleManager.getSingleton().getSynonymWords(currentInput);
-            //System.out.println("[Synonym]Output:" + currentWords);
             if (currentWords == null || currentWords.isEmpty()) {
                 currentInput = null;
 
