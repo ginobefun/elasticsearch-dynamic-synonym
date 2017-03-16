@@ -55,7 +55,7 @@ Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonym
 
     mvn clean install -DskipTests
    
-3.在ES_HOME/plugin目录新建dynamic-synonym目录，并将target/releases/elasticsearch-dynamic-synonym-<version>.zip文件解压到该目录
+3.在ES_HOME/plugin目录新建dynamic-synonym目录，并将target/releases/elasticsearch-dynamic-synonym-\<version\>.zip文件解压到该目录
 
 4.在MySQL中创建Elasticsearch同义词数据库并创建用户
 
