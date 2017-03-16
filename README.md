@@ -33,7 +33,7 @@ Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonym
 
 
     // 精确映射同义词，【阿迪】、【阿迪达斯】和【adidasi】的token将会转换为【Adidas】存入倒排索引中
-    阿迪, 阿迪达斯=> Adidas
+    阿迪, 阿迪达斯, adidasi => Adidas
     
     // 对等同义词
     // 当expand为true时，当出现以下任何一个token，三个token都会存入倒排索引中
@@ -49,19 +49,16 @@ Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonym
 ## 安装
 1.下载插件源码
 
-
     git clone git@github.com:ginobefun/elasticsearch-dynamic-synonym.git
 
 2.使用maven编译插件
 
-    
     mvn clean install -DskipTests
    
 3.在ES_HOME/plugin目录新建dynamic-synonym目录，并将target/releases/elasticsearch-dynamic-synonym-<version>.zip文件解压到该目录
 
 4.在MySQL中创建Elasticsearch同义词数据库并创建用户
 
-    
     create database elasticsearch;
     DROP TABLE IF EXISTS `dynamic_synonym_rule`;
     CREATE TABLE `dynamic_synonym_rule` (
@@ -121,7 +118,6 @@ Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonym
     }
 
 测试分析器效果【耐克】
-
 
     http://localhost:9200/test/_analyze?analyzer=analyzer_with_dynamic_synonym&text=耐克
 
