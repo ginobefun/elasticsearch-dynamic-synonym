@@ -13,43 +13,51 @@
  */
 package com.ginobefunny.elasticsearch.plugins.synonym;
 
-import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.logging.ESLogger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.index.analysis.AnalysisModule;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.index.IndexSettings;
+import org.elasticsearch.index.analysis.TokenFilterFactory;
+import org.elasticsearch.indices.analysis.AnalysisModule;
+import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by ginozhang on 2017/1/12.
  */
-public class DynamicSynonymPlugin extends Plugin {
+public class DynamicSynonymPlugin extends Plugin implements AnalysisPlugin {
+
+    public static final Logger logger = ESLoggerFactory.getLogger(Plugin.class.getName());
 
     /** Plugin name **/
     public static final String PLUGIN_NAME = "dynamic-synonym";
 
-    public static final ESLogger logger = ESLoggerFactory.getLogger(PLUGIN_NAME);
-
     @Override
-    public String name() {
-        return PLUGIN_NAME;
+    public Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
+        Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> tokenFilters = new HashMap<>();
+
+        tokenFilters.put(PLUGIN_NAME, requiresAnalysisSettings((is, env, name, settings) -> new DynamicSynonymTokenFilterFactory(is, env, name, settings)));
+
+        return tokenFilters;
     }
 
-    @Override
-    public String description() {
-        return "ElasticSearch Plugin for Dynaic Synonym Token Filter.";
-    }
+    private static <T> AnalysisModule.AnalysisProvider<T> requiresAnalysisSettings(AnalysisModule.AnalysisProvider<T> provider) {
+        return new AnalysisModule.AnalysisProvider<T>() {
 
-    @Override
-    public Collection<Module> nodeModules() {
-        // this method will be called when node start
-        return Collections.<Module>singletonList(new DynamicSynonymModule());
-    }
+            @Override
+            public T get(IndexSettings indexSettings, Environment environment, String name, Settings settings) throws IOException {
+                return provider.get(indexSettings, environment, name, settings);
+            }
 
-    public void onModule(AnalysisModule module) {
-        // this mothod will be called where analyzer need
-        module.addProcessor(new DynamicSynonymBinderProcessor());
+            @Override
+            public boolean requiresAnalysisSettings() {
+                return true;
+            }
+        };
     }
 }

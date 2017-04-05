@@ -18,55 +18,41 @@ import com.ginobefunny.elasticsearch.plugins.synonym.service.DynamicSynonymToken
 import com.ginobefunny.elasticsearch.plugins.synonym.service.SynonymRuleManager;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.Tokenizer;
-import org.apache.lucene.analysis.core.LowerCaseFilter;
-import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.index.Index;
+import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.analysis.AbstractTokenFilterFactory;
-import org.elasticsearch.index.analysis.AnalysisSettingsRequired;
-import org.elasticsearch.index.analysis.TokenizerFactory;
-import org.elasticsearch.index.analysis.TokenizerFactoryFactory;
-import org.elasticsearch.index.settings.IndexSettingsService;
-import org.elasticsearch.indices.analysis.IndicesAnalysisService;
 
-import java.util.Map;
+import java.io.IOException;
 
-@AnalysisSettingsRequired
 public class DynamicSynonymTokenFilterFactory extends AbstractTokenFilterFactory {
 
     @Inject
-    public DynamicSynonymTokenFilterFactory(Index index, IndexSettingsService indexSettingsService, Environment env, IndicesAnalysisService indicesAnalysisService, Map<String, TokenizerFactoryFactory> tokenizerFactories,
-                                            @Assisted String name, @Assisted Settings settings) {
-        super(index, indexSettingsService.getSettings(), name, settings);
+    public DynamicSynonymTokenFilterFactory(IndexSettings indexSettings, Environment env,
+                                            String name, Settings settings) throws IOException {
+        super(indexSettings, name, settings);
 
         // get the filter setting params
         final boolean ignoreCase = settings.getAsBoolean("ignore_case", false);
         final boolean expand = settings.getAsBoolean("expand", true);
         String dbUrl = settings.get("db_url");
+
         String tokenizerName = settings.get("tokenizer", "whitespace");
-        DynamicSynonymPlugin.logger.debug("tokenizer = {}, db_url = {},  ignore_case = {}, expand = {}", tokenizerName, dbUrl, ignoreCase, expand);
-
-        TokenizerFactoryFactory tokenizerFactoryFactory = tokenizerFactories.get(tokenizerName);
-        if (tokenizerFactoryFactory == null) {
-            tokenizerFactoryFactory = indicesAnalysisService.tokenizerFactoryFactory(tokenizerName);
+        Analyzer analyzer;
+        if ("standand".equalsIgnoreCase(tokenizerName)) {
+            analyzer = new StandardAnalyzer();
+        } else if ("keyword".equalsIgnoreCase(tokenizerName)) {
+            analyzer = new KeywordAnalyzer();
+        } else if ("simple".equalsIgnoreCase(tokenizerName)) {
+            analyzer = new SimpleAnalyzer();
+        } else {
+            analyzer = new WhitespaceAnalyzer();
         }
-        if (tokenizerFactoryFactory == null) {
-            throw new IllegalArgumentException("failed to find tokenizer [" + tokenizerName + "] for synonym token filter");
-        }
-
-        final TokenizerFactory tokenizerFactory = tokenizerFactoryFactory.create(tokenizerName, Settings.builder().put(indexSettingsService.getSettings()).put(settings).build());
-        Analyzer analyzer = new Analyzer() {
-            @Override
-            protected TokenStreamComponents createComponents(String fieldName) {
-                Tokenizer tokenizer = tokenizerFactory == null ? new WhitespaceTokenizer() : tokenizerFactory.create();
-                TokenStream stream = ignoreCase ? new LowerCaseFilter(tokenizer) : tokenizer;
-                return new TokenStreamComponents(tokenizer, stream);
-            }
-        };
 
         // NOTE: the manager will only init once
         SynonymRuleManager.initial(new Configuration(ignoreCase, expand, analyzer, dbUrl));
