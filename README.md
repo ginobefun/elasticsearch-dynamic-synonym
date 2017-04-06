@@ -82,69 +82,112 @@ Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonym
 
 ## 配置
 
-在Elasticsearch的elasticsearch.yml文件或在API创建索引时配置分析器和过滤器：
+Elasticsearch创建索引时配置分析器和过滤器：
 
-    index:
-      analysis:
-        filter:
-          my_synonym:
-            type: dynamic-synonym
-            expand: true
-            ignore_case: true
-            tokenizer: whitespace
-            db_url: jdbc:mysql://localhost:3306/elasticsearch?user=test_user&password=test_pwd&useUnicode=true&characterEncoding=UTF8
-        analyzer:
-          analyzer_with_dynamic_synonym:
-            type: custom
-            tokenizer: whitespace
-            filter: ["my_synonym"]
+    PUT /index_synonym
+    {
+          "settings": {
+            "analysis": {
+              "analyzer": {
+                "analyzer_with_dynamic_synonym": {
+                  "type": "custom",
+                  "tokenizer": "whitespace",
+                  "filter": ["my_synonym"]
+                }
+              },
+              "filter": {
+                "my_synonym": {
+                  "type": "dynamic-synonym",
+                  "expand": true,
+                  "ignore_case": true,
+                  "tokenizer": "whitespace",
+                  "db_url": "jdbc:mysql://localhost:3306/elasticsearch?user=es_user&password=es_pwd&useUnicode=true&characterEncoding=UTF8"
+                }
+              }
+            }
+          }
+    }
+
+设置Mapping
+
+    POST /index_synonym/product/_mapping
+    {
+        "product": {
+            "properties": {
+                "productName": {
+                    "type": "text",
+                    "analyzer": "analyzer_with_dynamic_synonym"
+                }
+            }
+        }
+    }
+
 
 ## 使用
+索引一些测试数据
 
-测试分析器效果【阿迪】
+    POST /index_synonym/product/1
+    {"productName":"This is a nike shoes"}
+    
+    POST /index_synonym/product/2
+    {"productName":"This is a nike sports jacket"}
+    
+    POST /index_synonym/product/3
+    {"productName":"This is a adidas shoes"}
+    
+    POST /index_synonym/product/4
+    {"productName":"This is a adidas sports jacket"}
+    
+    POST /index_synonym/product/5
+    {"productName":"This is a vans shoes"}
+    
+    POST /index_synonym/product/6
+    {"productName":"This is a vans sports jacket"}
 
-    http://localhost:9200/test/_analyze?analyzer=analyzer_with_dynamic_synonym&text=阿迪
-
-    {
-      "tokens": [
-        {
-          "token": "adidas",
-          "start_offset": 0,
-          "end_offset": 2,
-          "type": "SYNONYM",
-          "position": 0
-        }
-      ]
-    }
 
 测试分析器效果【耐克】
 
-    http://localhost:9200/test/_analyze?analyzer=analyzer_with_dynamic_synonym&text=耐克
+    POST index_synonym/_search
+    {
+      "query": {
+        "match": {
+          "productName": "耐克"
+        }
+      }
+    }
 
     {
-      "tokens": [
-        {
-          "token": "nike",
-          "start_offset": 0,
-          "end_offset": 2,
-          "type": "SYNONYM",
-          "position": 0
-        },
-        {
-          "token": "耐克",
-          "start_offset": 0,
-          "end_offset": 2,
-          "type": "SYNONYM",
-          "position": 1
-        },
-        {
-          "token": "naike",
-          "start_offset": 0,
-          "end_offset": 2,
-          "type": "SYNONYM",
-          "position": 2
-        }
-      ]
+      "took": 7,
+      "timed_out": false,
+      "_shards": {
+        "total": 5,
+        "successful": 5,
+        "failed": 0
+      },
+      "hits": {
+        "total": 2,
+        "max_score": 2.4740286,
+        "hits": [
+          {
+            "_index": "index_synonym",
+            "_type": "product",
+            "_id": "2",
+            "_score": 2.4740286,
+            "_source": {
+              "productName": "This is a nike sports jacket"
+            }
+          },
+          {
+            "_index": "index_synonym",
+            "_type": "product",
+            "_id": "1",
+            "_score": 0.85747814,
+            "_source": {
+              "productName": "This is a nike shoes"
+            }
+          }
+        ]
+      }
     }
 
 往数据库中插入一条同义词，测试【范斯】
@@ -156,25 +199,47 @@ Elasticsearch自带的同义词过滤器支持在分析器配置（使用synonym
     [2017-03-15 15:55:29,645][INFO ][dynamic-synonym          ] Start to reload synonym rule...
     [2017-03-15 15:55:29,661][INFO ][dynamic-synonym          ] Succeed to reload 3 synonym rule!
 
-    http://localhost:9200/test/_analyze?analyzer=analyzer_with_dynamic_synonym&text=范斯
+    POST index_synonym/_search
+    {
+      "query": {
+        "match": {
+          "productName": "范斯"
+        }
+      }
+    }
     
     {
-      "tokens": [
-        {
-          "token": "vans",
-          "start_offset": 0,
-          "end_offset": 2,
-          "type": "SYNONYM",
-          "position": 0
-        },
-        {
-          "token": "范斯",
-          "start_offset": 0,
-          "end_offset": 2,
-          "type": "SYNONYM",
-          "position": 1
-        }
-      ]
+      "took": 4,
+      "timed_out": false,
+      "_shards": {
+        "total": 5,
+        "successful": 5,
+        "failed": 0
+      },
+      "hits": {
+        "total": 2,
+        "max_score": 1.9490025,
+        "hits": [
+          {
+            "_index": "index_synonym",
+            "_type": "product",
+            "_id": "6",
+            "_score": 1.9490025,
+            "_source": {
+              "productName": "This is a vans sports jacket"
+            }
+          },
+          {
+            "_index": "index_synonym",
+            "_type": "product",
+            "_id": "5",
+            "_score": 0.53484553,
+            "_source": {
+              "productName": "This is a vans shoes"
+            }
+          }
+        ]
+      }
     }
 
 # 总结与后续改进

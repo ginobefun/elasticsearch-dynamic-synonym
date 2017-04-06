@@ -16,13 +16,15 @@ package com.ginobefunny.elasticsearch.plugins.synonym;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.Configuration;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.DynamicSynonymTokenFilter;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.SynonymRuleManager;
+import com.ginobefunny.elasticsearch.plugins.synonym.service.utils.Monitor;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.IndexSettings;
@@ -32,7 +34,8 @@ import java.io.IOException;
 
 public class DynamicSynonymTokenFilterFactory extends AbstractTokenFilterFactory {
 
-    @Inject
+    private static final Logger LOGGER = ESLoggerFactory.getLogger(Monitor.class.getName());
+
     public DynamicSynonymTokenFilterFactory(IndexSettings indexSettings, Environment env,
                                             String name, Settings settings) throws IOException {
         super(indexSettings, name, settings);
@@ -40,9 +43,11 @@ public class DynamicSynonymTokenFilterFactory extends AbstractTokenFilterFactory
         // get the filter setting params
         final boolean ignoreCase = settings.getAsBoolean("ignore_case", false);
         final boolean expand = settings.getAsBoolean("expand", true);
-        String dbUrl = settings.get("db_url");
+        final String dbUrl = settings.get("db_url");
+        final String tokenizerName = settings.get("tokenizer", "whitespace");
 
-        String tokenizerName = settings.get("tokenizer", "whitespace");
+        LOGGER.info("[DynamicSynonymTokenFilterFactory.new][name={}][ignoreCase={}][expand={}][dbUrl={}][tokenizerName={}]", name, ignoreCase, expand, dbUrl, tokenizerName);
+
         Analyzer analyzer;
         if ("standand".equalsIgnoreCase(tokenizerName)) {
             analyzer = new StandardAnalyzer();
@@ -60,6 +65,7 @@ public class DynamicSynonymTokenFilterFactory extends AbstractTokenFilterFactory
 
     @Override
     public TokenStream create(TokenStream tokenStream) {
+        LOGGER.info("[DynamicSynonymTokenFilterFactory.create]");
         return new DynamicSynonymTokenFilter(tokenStream);
     }
 }

@@ -13,8 +13,6 @@
  */
 package com.ginobefunny.elasticsearch.plugins.synonym;
 
-import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.IndexSettings;
@@ -32,8 +30,6 @@ import java.util.Map;
  */
 public class DynamicSynonymPlugin extends Plugin implements AnalysisPlugin {
 
-    public static final Logger logger = ESLoggerFactory.getLogger(Plugin.class.getName());
-
     /** Plugin name **/
     public static final String PLUGIN_NAME = "dynamic-synonym";
 
@@ -46,7 +42,7 @@ public class DynamicSynonymPlugin extends Plugin implements AnalysisPlugin {
         return tokenFilters;
     }
 
-    private static <T> AnalysisModule.AnalysisProvider<T> requiresAnalysisSettings(AnalysisModule.AnalysisProvider<T> provider) {
+    private <T> AnalysisModule.AnalysisProvider<T> requiresAnalysisSettings(AnalysisModule.AnalysisProvider<T> provider) {
         return new AnalysisModule.AnalysisProvider<T>() {
 
             @Override

@@ -13,14 +13,17 @@
  */
 package com.ginobefunny.elasticsearch.plugins.synonym.service.utils;
 
-import com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.Configuration;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.SynonymRuleManager;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 
 /**
  * Created by ginozhang on 2017/1/12.
  */
 public class Monitor implements Runnable {
+
+    private static final Logger LOGGER = ESLoggerFactory.getLogger(Monitor.class.getName());
 
     private Configuration configuration;
 
@@ -41,7 +44,7 @@ public class Monitor implements Runnable {
                 }
             }
         } catch (Exception e) {
-            DynamicSynonymPlugin.logger.error("Failed to reload synonym rule!", e);
+            LOGGER.error("Failed to reload synonym rule!", e);
         }
     }
 

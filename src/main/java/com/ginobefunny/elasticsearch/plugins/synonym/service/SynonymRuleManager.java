@@ -13,9 +13,10 @@
  */
 package com.ginobefunny.elasticsearch.plugins.synonym.service;
 
-import com.ginobefunny.elasticsearch.plugins.synonym.DynamicSynonymPlugin;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.utils.JDBCUtils;
 import com.ginobefunny.elasticsearch.plugins.synonym.service.utils.Monitor;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -27,6 +28,8 @@ import java.util.concurrent.TimeUnit;
  * Created by ginozhang on 2017/1/12.
  */
 public class SynonymRuleManager {
+
+    private static final Logger LOGGER = ESLoggerFactory.getLogger(Monitor.class.getName());
 
     private static final int DB_CHECK_URL = 60;
 
@@ -83,17 +86,17 @@ public class SynonymRuleManager {
                 this.synonymMap.addRule(rule);
             }
 
-            DynamicSynonymPlugin.logger.info("Load {} synonym rule succeed!", synonymRuleList.size());
+            LOGGER.info("Load {} synonym rule succeed!", synonymRuleList.size());
             return currentMaxVersion;
         } catch (Exception e) {
-            DynamicSynonymPlugin.logger.error("Load synonym rule failed!", e);
+            LOGGER.error("Load synonym rule failed!", e);
             //throw new RuntimeException(e);
             return 0L;
         }
     }
 
     public boolean reloadSynonymRule(long maxVersion) {
-        DynamicSynonymPlugin.logger.info("Start to reload synonym rule...");
+        LOGGER.info("Start to reload synonym rule...");
         boolean reloadResult = true;
         try {
             SynonymRuleManager tmpManager = new SynonymRuleManager();
@@ -105,9 +108,9 @@ public class SynonymRuleManager {
             }
 
             this.synonymMap = tempSynonymMap;
-            DynamicSynonymPlugin.logger.info("Succeed to reload {} synonym rule!", synonymRuleList.size());
+            LOGGER.info("Succeed to reload {} synonym rule!", synonymRuleList.size());
         } catch (Throwable t) {
-            DynamicSynonymPlugin.logger.error("Failed to reload synonym rule!", t);
+            LOGGER.error("Failed to reload synonym rule!", t);
             reloadResult = false;
         }
 
